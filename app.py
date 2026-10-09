@@ -226,7 +226,7 @@ if st.session_state.report_markdown:
             st.markdown(prompt)
 
         with st.spinner("Generating response..."):
-            response = call_groq_llm(st.session_state.messages, doc_only_mode=doc_only_mode)
+            response = "llama-3.3-70b-versatile"(st.session_state.messages, doc_only_mode=doc_only_mode)
 
         with st.chat_message("assistant"):
             st.markdown(response, unsafe_allow_html=True)
