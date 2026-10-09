@@ -21,7 +21,7 @@ def call_groq_llm(messages, doc_only_mode=False):
         client = Groq(api_key=api_key)
         
         # Clean model string without non-printable characters
-        model_name = "llama-3.3-70b-versatile"
+        model_name = "llama-3.1-8b-instant"
 
         # Format messages for the Groq client
         formatted_messages = []
