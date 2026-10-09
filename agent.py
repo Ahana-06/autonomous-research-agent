@@ -4,7 +4,6 @@ from groq import Groq
 def call_groq_llm(messages, doc_only_mode=False):
     """
     Calls the Groq API using a clean model identifier.
-    Reads GROQ_API_KEY from environment variables or Streamlit secrets.
     """
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -20,10 +19,9 @@ def call_groq_llm(messages, doc_only_mode=False):
     try:
         client = Groq(api_key=api_key)
         
-        # Clean model string without non-printable characters
+        # Clean string without backticks or non-breaking spaces
         model_name = "llama-3.1-8b-instant"
 
-        # Format messages for the Groq client
         formatted_messages = []
         for msg in messages:
             formatted_messages.append({
