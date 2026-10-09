@@ -1,45 +1,42 @@
 import os
-import streamlit as st
-from dotenv import load_dotenv
 from groq import Groq
-
-# Load local environment variables if available
-load_dotenv()
-
-# Read from Streamlit Cloud Secrets first, fallback to local environment variable
-groq_api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY", ""))
-
-client = Groq(api_key=groq_api_key) if groq_api_key else None
 
 def call_groq_llm(messages, doc_only_mode=False):
     """
-    Sends conversation history to Groq LLM, adjusting system instructions
-    based on the Strict Document-Only toggle.
+    Calls the Groq API using the clean model identifier.
+    Reads GROQ_API_KEY from environment / st.secrets.
     """
-    if not client:
-        return "⚠️ Error: GROQ_API_KEY is missing. Please add GROQ_API_KEY to Streamlit Secrets or your local .env file."
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        try:
+            import streamlit as st
+            api_key = st.secrets.get("GROQ_API_KEY")
+        except Exception:
+            pass
 
-    # Dynamic system instruction based on search mode
-    system_instruction = (
-        "You are an AI research assistant. STRICT RULE: Answer exclusively using the "
-        "provided private PDF documents. Do NOT reference external web knowledge."
-        if doc_only_mode
-        else "You are an AI research assistant. Synthesize answers by cross-referencing "
-             "both private PDF documents AND live web search results."
-    )
-
-    # Format messages array with updated system prompt
-    formatted_messages = [{"role": "system", "content": system_instruction}] + [
-        msg for msg in messages if msg["role"] != "system"
-    ]
+    if not api_key:
+        return "⚠️ Error: GROQ_API_KEY is not configured in Streamlit Secrets or Environment Variables."
 
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+        client = Groq(api_key=api_key)
+        
+        # Clean model string to prevent 404 / hidden character issues
+        model_name = "llama-3.3-70b-versatile"
+
+        # Format messages for the Groq client
+        formatted_messages = []
+        for msg in messages:
+            formatted_messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+
+        completion = client.chat.completions.create(
+            model=model_name,
             messages=formatted_messages,
-            temperature=0.3 if doc_only_mode else 0.7,
-            max_tokens=1024,
+            temperature=0.3,
+            max_tokens=1024
         )
-        return response.choices[0].message.content
+        return completion.choices[0].message.content
     except Exception as e:
         return f"Error calling Groq API: {str(e)}"

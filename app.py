@@ -2,7 +2,7 @@ import streamlit as st
 from agent import call_groq_llm
 
 # ---------------------------------------------------------
-# Page Setup & Subtle Cyber-Anime Styling (Aaruush Inspired)
+# Page Setup & Styling
 # ---------------------------------------------------------
 st.set_page_config(page_title="Autonomous Research Agent", layout="wide", page_icon="⚡")
 
@@ -14,19 +14,16 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Main Dark Background */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #15102a 0%, #08090d 65%);
         color: #e2e8f0;
     }
 
-    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #0d0f17 !important;
         border-right: 1px solid #1e2235 !important;
     }
 
-    /* Input Areas */
     .stTextArea textarea, .stTextInput input {
         background-color: #121420 !important;
         color: #f1f5f9 !important;
@@ -35,7 +32,6 @@ st.markdown("""
         font-size: 15px !important;
     }
 
-    /* Primary Gradient Button */
     .stButton > button {
         background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
         color: #ffffff !important;
@@ -47,7 +43,6 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3) !important;
     }
 
-    /* Report Card Container */
     .report-box {
         background: rgba(18, 20, 32, 0.7);
         backdrop-filter: blur(12px);
@@ -58,7 +53,6 @@ st.markdown("""
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
-    /* Citation Badges (ChatGPT/Claude Style) */
     .citation-tag {
         display: inline-block;
         background: rgba(99, 102, 241, 0.2);
@@ -72,7 +66,6 @@ st.markdown("""
         vertical-align: super;
     }
 
-    /* Follow-up Chips */
     .chip-badge {
         display: inline-block;
         background: #181b2b;
@@ -104,7 +97,7 @@ if "current_query" not in st.session_state:
     st.session_state.current_query = "What is KNN?"
 
 # ---------------------------------------------------------
-# Sidebar Setup (Knowledge Base, Search Mode, & Recent History)
+# Sidebar Setup
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
@@ -226,7 +219,7 @@ if st.session_state.report_markdown:
             st.markdown(prompt)
 
         with st.spinner("Generating response..."):
-            response = "llama-3.3-70b-versatile"(st.session_state.messages, doc_only_mode=doc_only_mode)
+            response = call_groq_llm(st.session_state.messages, doc_only_mode=doc_only_mode)
 
         with st.chat_message("assistant"):
             st.markdown(response, unsafe_allow_html=True)
