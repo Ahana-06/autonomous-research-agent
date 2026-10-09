@@ -139,39 +139,35 @@ user_query = st.text_area("Research Query", value=st.session_state.current_query
 if st.button("🚀 Run Research Agent"):
     mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
     
-    with st.spinner(f"Running agent in [{mode_label}] mode..."):
-        if doc_only_mode:
-            sample_report = f"""## Executive Summary (Document-Only Mode)
-K-Nearest Neighbors (KNN) is explained within the uploaded internal document as an instance-based supervised learning algorithm <span class="citation-tag">[Internal-1]</span>.
+    with st.spinner(f"Generating research report on '{user_query}'..."):
+        # Construct dynamic prompt for the Groq API call
+        report_prompt = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an Autonomous Research Agent. Generate a well-structured Markdown research report "
+                    "containing:\n"
+                    "1. ## Executive Summary\n"
+                    "2. ## Key Findings (bullet points with citation badges like <span class=\"citation-tag\">[Web-1]</span> or <span class=\"citation-tag\">[Internal-1]</span>)\n"
+                    "3. ## Sources"
+                )
+            },
+            {
+                "role": "user",
+                "content": f"Generate a comprehensive research report for the topic: {user_query}"
+            }
+        ]
 
-## Key Findings
-- **Instance-Based:** Stores all training data locally without pre-building a target model <span class="citation-tag">[Internal-1]</span>.
-- **Workflow:** Computes predictions during runtime based on geometric closeness <span class="citation-tag">[Internal-1]</span>.
+        # Call Groq API dynamically for any topic entered
+        generated_report = call_groq_llm(report_prompt, doc_only_mode=doc_only_mode)
 
-## Sources
-- **[Internal-1]** KNN-.pdf, page 3 - step-by-step algorithm workflow
-"""
-        else:
-            sample_report = f"""## Executive Summary (Hybrid Web + Document Mode)
-K-Nearest Neighbors (KNN) is a fundamental, non-parametric supervised learning algorithm <span class="citation-tag">[Internal-1]</span>. External web benchmarks highlight its versatility in high-dimensional feature space applications <span class="citation-tag">[Web-1]</span>.
-
-## Key Findings
-- **Instance-Based Learning:** Stores training datasets locally for immediate query processing <span class="citation-tag">[Internal-1]</span>.
-- **Distance Metrics:** Utilizes Euclidean and Manhattan distance formulas <span class="citation-tag">[Web-2]</span>.
-
-## Sources
-- **[Web-1]** Wikipedia, "K-nearest neighbors algorithm"
-- **[Web-2]** IBM, "What is KNN?"
-- **[Internal-1]** KNN-.pdf, page 3
-"""
-
-        st.session_state.report_markdown = sample_report
+        st.session_state.report_markdown = generated_report
         st.session_state.messages = []
         st.session_state.current_query = user_query
 
         st.session_state.research_history.append({
             "query": user_query,
-            "report": sample_report,
+            "report": generated_report,
             "messages": st.session_state.messages
         })
 

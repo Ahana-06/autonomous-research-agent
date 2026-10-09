@@ -3,8 +3,8 @@ from groq import Groq
 
 def call_groq_llm(messages, doc_only_mode=False):
     """
-    Calls the Groq API using the clean model identifier.
-    Reads GROQ_API_KEY from environment / st.secrets.
+    Calls the Groq API using a clean model identifier.
+    Reads GROQ_API_KEY from environment variables or Streamlit secrets.
     """
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -20,7 +20,7 @@ def call_groq_llm(messages, doc_only_mode=False):
     try:
         client = Groq(api_key=api_key)
         
-        # Clean model string to prevent 404 / hidden character issues
+        # Clean model string without non-printable characters
         model_name = "llama-3.3-70b-versatile"
 
         # Format messages for the Groq client
