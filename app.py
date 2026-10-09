@@ -94,7 +94,7 @@ if "research_history" not in st.session_state:
     st.session_state.research_history = []
 
 if "current_query" not in st.session_state:
-    st.session_state.current_query = "What is KNN?"
+    st.session_state.current_query = ""
 
 # ---------------------------------------------------------
 # Sidebar Setup
@@ -134,42 +134,50 @@ with st.sidebar:
 st.markdown("""<h1 style='text-align: center; background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; font-weight: 800;'>Autonomous Research Agent</h1>""", unsafe_allow_html=True)
 st.markdown("""<p style='text-align: center; color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem;'>Synthesizing real-time web intelligence with private document context.</p>""", unsafe_allow_html=True)
 
-user_query = st.text_area("Research Query", value=st.session_state.current_query, label_visibility="collapsed")
+user_query = st.text_area(
+    "Research Query", 
+    value=st.session_state.current_query, 
+    placeholder="Enter any topic to research (e.g., Quantum Computing, Transformer Architectures, Neural Networks...)", 
+    label_visibility="collapsed"
+)
 
 if st.button("🚀 Run Research Agent"):
-    mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
-    
-    with st.spinner(f"Generating research report on '{user_query}'..."):
-        # Construct dynamic prompt for the Groq API call
-        report_prompt = [
-            {
-                "role": "system",
-                "content": (
-                    "You are an Autonomous Research Agent. Generate a well-structured Markdown research report "
-                    "containing:\n"
-                    "1. ## Executive Summary\n"
-                    "2. ## Key Findings (bullet points with citation badges like <span class=\"citation-tag\">[Web-1]</span> or <span class=\"citation-tag\">[Internal-1]</span>)\n"
-                    "3. ## Sources"
-                )
-            },
-            {
-                "role": "user",
-                "content": f"Generate a comprehensive research report for the topic: {user_query}"
-            }
-        ]
+    if not user_query.strip():
+        st.warning("Please enter a research topic first.")
+    else:
+        mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
+        
+        with st.spinner(f"Generating research report on '{user_query}'..."):
+            # Construct dynamic prompt for the Groq API call
+            report_prompt = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an Autonomous Research Agent. Generate a well-structured Markdown research report "
+                        "containing:\n"
+                        "1. ## Executive Summary\n"
+                        "2. ## Key Findings (bullet points with citation badges like <span class=\"citation-tag\">[Web-1]</span> or <span class=\"citation-tag\">[Internal-1]</span>)\n"
+                        "3. ## Sources"
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"Generate a comprehensive research report for the topic: {user_query}"
+                }
+            ]
 
-        # Call Groq API dynamically for any topic entered
-        generated_report = call_groq_llm(report_prompt, doc_only_mode=doc_only_mode)
+            # Call Groq API dynamically for any topic entered
+            generated_report = call_groq_llm(report_prompt, doc_only_mode=doc_only_mode)
 
-        st.session_state.report_markdown = generated_report
-        st.session_state.messages = []
-        st.session_state.current_query = user_query
+            st.session_state.report_markdown = generated_report
+            st.session_state.messages = []
+            st.session_state.current_query = user_query
 
-        st.session_state.research_history.append({
-            "query": user_query,
-            "report": generated_report,
-            "messages": st.session_state.messages
-        })
+            st.session_state.research_history.append({
+                "query": user_query,
+                "report": generated_report,
+                "messages": st.session_state.messages
+            })
 
 # ---------------------------------------------------------
 # Report Output & Interactive Follow-Up Chat
@@ -192,9 +200,9 @@ if st.session_state.report_markdown:
 
     st.markdown("""
         <div>
-            <span class="chip-badge">💡 How to choose optimal k?</span>
-            <span class="chip-badge">💻 Provide Python KNN implementation</span>
-            <span class="chip-badge">📐 Distance metrics comparison</span>
+            <span class="chip-badge">💡 Key Takeaways</span>
+            <span class="chip-badge">💻 Code Example / Implementation</span>
+            <span class="chip-badge">📐 Future Outlook</span>
         </div>
     """, unsafe_allow_html=True)
 
