@@ -125,13 +125,13 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Splash Screen with Click Explosion
+# Cinematic 3D App Globe Landing Screen
 # ---------------------------------------------------------
 if not st.session_state.intro_passed:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem;'>
-            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.5rem; font-weight: 800;'>Autonomous Research Agent</h1>
-            <p style='color: #94a3b8; font-size: 1.2rem; margin-bottom: 0px;'>Click the 3D App Globe below to explore and deploy interface modules...</p>
+            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.2rem; font-weight: 800;'>Autonomous Research Agent</h1>
+            <p style='color: #94a3b8; font-size: 1.1rem; margin-bottom: 5px;'>Interactive 3D App Globe Core Initialized</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -140,38 +140,23 @@ if not st.session_state.intro_passed:
     <html>
     <head>
         <style>
-            body { margin: 0; background: transparent; overflow: hidden; cursor: pointer; }
+            body { margin: 0; background: transparent; overflow: hidden; }
             canvas { display: block; margin: auto; }
-            #instruction {
-                position: absolute;
-                bottom: 10px;
-                width: 100%;
-                text-align: center;
-                color: #c084fc;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                font-size: 14px;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
-                pointer-events: none;
-            }
         </style>
     </head>
     <body>
-        <div id="instruction">⚡ CLICK GLOBE TO EXPLORE & LAUNCH ⚡</div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 420, 0.1, 1000);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 420);
+            renderer.setSize(window.innerWidth, 400);
             document.body.appendChild(renderer.domElement);
 
-            // Create App Globe (Spherical constellation of nodes representing app features)
-            const particleCount = 1200;
+            // App Globe Constellation Particles
+            const particleCount = 1500;
             const geometry = new THREE.BufferGeometry();
             const positions = [];
-            const velocities = [];
 
             for (let i = 0; i < particleCount; i++) {
                 const phi = Math.acos(-1 + (2 * i) / particleCount);
@@ -182,20 +167,13 @@ if not st.session_state.intro_passed:
                 const z = 2 * Math.cos(phi);
 
                 positions.push(x, y, z);
-
-                // Explosion dispersal velocities
-                velocities.push(
-                    (Math.random() - 0.5) * 0.3,
-                    (Math.random() - 0.5) * 0.3,
-                    (Math.random() - 0.5) * 0.3
-                );
             }
 
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
             const material = new THREE.PointsMaterial({
                 color: 0xc084fc,
-                size: 0.07,
+                size: 0.06,
                 transparent: true,
                 opacity: 0.9
             });
@@ -203,72 +181,46 @@ if not st.session_state.intro_passed:
             const globe = new THREE.Points(geometry, material);
             scene.add(globe);
 
-            // Glowing Core Ring
-            const ringGeo = new THREE.RingGeometry(2.5, 2.55, 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+            // Orbiting Core Ring
+            const ringGeo = new THREE.RingGeometry(2.4, 2.45, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
             scene.add(ring);
 
-            camera.position.z = 6;
-
-            let exploding = false;
-            let frameCount = 0;
-
-            window.addEventListener('click', () => {
-                exploding = true;
-                document.getElementById('instruction').style.opacity = '0';
-            });
+            camera.position.z = 5.5;
 
             function animate() {
                 requestAnimationFrame(animate);
-
-                globe.rotation.y += 0.005;
+                globe.rotation.y += 0.006;
                 globe.rotation.x += 0.002;
-                ring.rotation.z -= 0.008;
-
-                if (exploding) {
-                    const posAttr = geometry.attributes.position;
-                    const arr = posAttr.array;
-                    for (let i = 0; i < particleCount; i++) {
-                        arr[i * 3] += velocities[i] * 3;
-                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 3;
-                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 3;
-                    }
-                    posAttr.needsUpdate = true;
-                    material.opacity -= 0.02;
-                    ring.scale.addScalar(0.08);
-                    ring.material.opacity -= 0.03;
-
-                    frameCount++;
-                    if (frameCount > 45) {
-                        // Notify Streamlit to finish intro and load app
-                        window.parent.postMessage({ type: 'streamlit:setComponentValue', value: true }, '*');
-                    }
-                }
-
+                ring.rotation.z -= 0.01;
                 renderer.render(scene, camera);
             }
             animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / 400;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, 400);
+            });
         </script>
     </body>
     </html>
     """
     
-    # Render component and capture click signal
-    clicked = components.html(app_globe_html, height=440)
-    
-    # Fallback button in case user prefers clicking a button
-    col1, col2, col3 = st.columns([2, 2, 2])
+    components.html(app_globe_html, height=420)
+
+    col1, col2, col3 = st.columns([1.5, 3, 1.5])
     with col2:
-        if st.button("⚡ Force Launch Dashboard", use_container_width=True) or clicked:
+        if st.button("⚡ Explode Globe & Launch Dashboard", use_container_width=True):
             st.session_state.intro_passed = True
             st.rerun()
 
     st.stop()
 
 # ---------------------------------------------------------
-# Main App (Loaded After Globe Exploration)
+# Main App Dashboard (Loaded After Globe Intro)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
