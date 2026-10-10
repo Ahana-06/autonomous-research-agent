@@ -43,6 +43,25 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3) !important;
     }
 
+    /* Follow-up quick-prompt chips: clickable pills */
+    [class*="st-key-chip_"] button {
+        background: #181b2b !important;
+        border: 1px solid #2e3554 !important;
+        color: #a5b4fc !important;
+        border-radius: 20px !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        box-shadow: none !important;
+    }
+    [class*="st-key-chip_"] button:hover {
+        border-color: #a855f7 !important;
+        color: #e9d5ff !important;
+        background: #20243a !important;
+    }
+
     .report-box {
         background: rgba(18, 20, 32, 0.7);
         backdrop-filter: blur(12px);
@@ -65,19 +84,6 @@ st.markdown("""
         margin-left: 4px;
         vertical-align: super;
     }
-
-    .chip-badge {
-        display: inline-block;
-        background: #181b2b;
-        border: 1px solid #2e3554;
-        color: #a5b4fc;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 500;
-        margin-right: 8px;
-        margin-bottom: 8px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,6 +102,30 @@ if "research_history" not in st.session_state:
 if "current_query" not in st.session_state:
     st.session_state.current_query = ""
 
+
+def start_new_chat():
+    """Clear the current report and follow-up chat. Recent Research is kept."""
+    st.session_state.report_markdown = None
+    st.session_state.messages = []
+    st.session_state.current_query = ""
+    st.session_state.pop("pending_prompt", None)
+
+
+def queue_prompt(prompt_text):
+    """Called when a follow-up chip is clicked; the chat section runs it."""
+    st.session_state["pending_prompt"] = prompt_text
+
+
+# Quick follow-up prompts: (button label, question sent to the assistant)
+QUICK_PROMPTS = [
+    ("💡 Key Takeaways",
+     "Summarize the key takeaways from this report in 4-5 concise bullet points."),
+    ("💻 Code Example / Implementation",
+     "Give a clean, practical code example or implementation based on this report."),
+    ("📐 Future Outlook",
+     "What is the future outlook, and what challenges does this report mention or imply?"),
+]
+
 # ---------------------------------------------------------
 # Sidebar Setup
 # ---------------------------------------------------------
@@ -107,7 +137,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("""<h3 style='color: #c084fc;'>🎛️ Search Mode</h3>""", unsafe_allow_html=True)
-    
+
     doc_only_mode = st.toggle("Strict Document-Only Mode", value=False)
     if doc_only_mode:
         st.info("📖 **Mode Active:** Reading strictly from uploaded PDFs.")
@@ -115,6 +145,8 @@ with st.sidebar:
         st.success("🌐 **Mode Active:** Hybrid (PDFs + Live Web Search).")
 
     st.markdown("---")
+    st.button("➕ New Chat", key="new_chat_btn", on_click=start_new_chat, use_container_width=True)
+
     st.markdown("""<h3 style='color: #c084fc;'>🕒 Recent Research</h3>""", unsafe_allow_html=True)
 
     if not st.session_state.research_history:
@@ -131,13 +163,13 @@ with st.sidebar:
 # ---------------------------------------------------------
 # Header & Research Input Area
 # ---------------------------------------------------------
-st.markdown("""<h1 style='text-align: center; background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; font-weight: 800;'>Autonomous Research Agent</h1>""", unsafe_allow_html=True)
+st.markdown("""<h1 style='text-align: center; background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3rem; font-weight: 800;'>Autonomous Research Agent</h1>""", unsafe_allow_html=True)
 st.markdown("""<p style='text-align: center; color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem;'>Synthesizing real-time web intelligence with private document context.</p>""", unsafe_allow_html=True)
 
 user_query = st.text_area(
-    "Research Query", 
-    value=st.session_state.current_query, 
-    placeholder="Enter any topic to research (e.g., Quantum Computing, Transformer Architectures, Neural Networks...)", 
+    "Research Query",
+    value=st.session_state.current_query,
+    placeholder="Enter any topic to research (e.g., Quantum Computing, Transformer Architectures, Neural Networks...)",
     label_visibility="collapsed"
 )
 
@@ -146,7 +178,7 @@ if st.button("🚀 Run Research Agent"):
         st.warning("Please enter a research topic first.")
     else:
         mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
-        
+
         with st.spinner(f"Generating research report on '{user_query}'..."):
             # Construct dynamic prompt for the Groq API call
             report_prompt = [
@@ -185,9 +217,9 @@ if st.button("🚀 Run Research Agent"):
 if st.session_state.report_markdown:
     st.markdown("---")
     st.markdown("""<h3 style='color: #f8fafc;'>📊 Generated Research Report</h3>""", unsafe_allow_html=True)
-    
+
     st.markdown(f'<div class="report-box">{st.session_state.report_markdown}</div>', unsafe_allow_html=True)
-    
+
     st.download_button(
         label="📥 Download Report as Markdown",
         data=st.session_state.report_markdown,
@@ -197,14 +229,19 @@ if st.session_state.report_markdown:
 
     st.markdown("<br><hr>", unsafe_allow_html=True)
     st.markdown("""<h3 style='color: #f8fafc;'>💬 AI Follow-up Assistant</h3>""", unsafe_allow_html=True)
+    st.caption("Click a quick prompt, or type your own question below.")
 
-    st.markdown("""
-        <div>
-            <span class="chip-badge">💡 Key Takeaways</span>
-            <span class="chip-badge">💻 Code Example / Implementation</span>
-            <span class="chip-badge">📐 Future Outlook</span>
-        </div>
-    """, unsafe_allow_html=True)
+    # Clickable quick-prompt chips: one click sends the question.
+    chip_cols = st.columns([1.1, 2, 1.2, 2.5])
+    for i, (label, question_text) in enumerate(QUICK_PROMPTS):
+        with chip_cols[i]:
+            st.button(
+                label,
+                key=f"chip_{i}",
+                on_click=queue_prompt,
+                args=(question_text,),
+                use_container_width=True,
+            )
 
     if not st.session_state.messages:
         st.session_state.messages.append({
@@ -217,7 +254,10 @@ if st.session_state.report_markdown:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"], unsafe_allow_html=True)
 
-    if prompt := st.chat_input("Ask a follow-up question about this report..."):
+    typed_prompt = st.chat_input("Ask a follow-up question about this report...")
+    prompt = st.session_state.pop("pending_prompt", None) or typed_prompt
+
+    if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
