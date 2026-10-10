@@ -180,7 +180,6 @@ if st.button("🚀 Run Research Agent"):
         mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
 
         with st.spinner(f"Generating research report on '{user_query}'..."):
-            # Construct dynamic prompt for the Groq API call
             report_prompt = [
                 {
                     "role": "system",
@@ -198,7 +197,6 @@ if st.button("🚀 Run Research Agent"):
                 }
             ]
 
-            # Call Groq API dynamically for any topic entered
             generated_report = call_groq_llm(report_prompt, doc_only_mode=doc_only_mode)
 
             st.session_state.report_markdown = generated_report
@@ -231,8 +229,8 @@ if st.session_state.report_markdown:
     st.markdown("""<h3 style='color: #f8fafc;'>💬 AI Follow-up Assistant</h3>""", unsafe_allow_html=True)
     st.caption("Click a quick prompt, or type your own question below.")
 
-    # Clickable quick-prompt chips: one click sends the question.
-    chip_cols = st.columns([1.1, 2, 1.2, 2.5])
+    # Clickable quick-prompt chips (exactly 3 columns matching QUICK_PROMPTS count)
+    chip_cols = st.columns(3)
     for i, (label, question_text) in enumerate(QUICK_PROMPTS):
         with chip_cols[i]:
             st.button(
