@@ -130,7 +130,7 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Splash Screen with Click-to-Burst
+# Cinematic 3D App Globe Splash Screen (Click-to-Burst)
 # ---------------------------------------------------------
 if not st.session_state.dashboard_unlocked:
     st.markdown("""
@@ -153,12 +153,12 @@ if not st.session_state.dashboard_unlocked:
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 420, 0.1, 1000);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 410, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 420);
+            renderer.setSize(window.innerWidth, 410);
             document.body.appendChild(renderer.domElement);
 
-            const particleCount = 2800;
+            const particleCount = 2600;
             const geometry = new THREE.BufferGeometry();
             const positions = [];
             const colors = [];
@@ -182,8 +182,6 @@ if not st.session_state.dashboard_unlocked:
                 positions.push(x, y, z);
                 const col = palette[Math.floor(Math.random() * palette.length)];
                 colors.push(col.r, col.g, col.b);
-
-                // Dispersal vectors radiating outward
                 velocities.push(x * 0.08, y * 0.08, z * 0.08);
             }
 
@@ -236,9 +234,12 @@ if not st.session_state.dashboard_unlocked:
                     ring.material.opacity -= 0.05;
 
                     frameCount++;
-                    if (frameCount > 25) {
-                        // Send signal back to Streamlit to unlock dashboard
-                        window.parent.postMessage({ type: 'streamlit:setComponentValue', value: true }, '*');
+                    if (frameCount > 30) {
+                        window.parent.postMessage({
+                            isStreamlitMessage: true,
+                            type: "streamlit:setComponentValue",
+                            value: true
+                        }, "*");
                     }
                 }
 
@@ -247,17 +248,17 @@ if not st.session_state.dashboard_unlocked:
             animate();
 
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / 420;
+                camera.aspect = window.innerWidth / 410;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, 420);
+                renderer.setSize(window.innerWidth, 410);
             });
         </script>
     </body>
     </html>
     """
 
-    globe_clicked = components.html(app_globe_html, height=440)
-
+    globe_clicked = components.html(app_globe_html, height=430)
+    
     if globe_clicked:
         st.session_state.dashboard_unlocked = True
         st.rerun()
