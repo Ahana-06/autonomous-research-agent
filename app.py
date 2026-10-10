@@ -44,7 +44,7 @@ st.markdown("""
         box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3) !important;
     }
 
-    /* Follow-up quick-prompt chips: clickable pills */
+    /* Follow-up quick-prompt chips */
     [class*="st-key-chip_"] button {
         background: #181b2b !important;
         border: 1px solid #2e3554 !important;
@@ -89,67 +89,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 3D Component Function (Three.js Neural Core)
-# ---------------------------------------------------------
-def render_3d_tech_badge():
-    three_js_html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { margin: 0; background: transparent; overflow: hidden; }
-            canvas { display: block; }
-        </style>
-    </head>
-    <body>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script>
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            const geometry = new THREE.IcosahedronGeometry(1.4, 1);
-            const material = new THREE.MeshBasicMaterial({ 
-                color: 0xa855f7, 
-                wireframe: true,
-                transparent: true,
-                opacity: 0.8
-            });
-            const sphere = new THREE.Mesh(geometry, material);
-            scene.add(sphere);
-
-            const innerGeo = new THREE.SphereGeometry(0.7, 16, 16);
-            const innerMat = new THREE.MeshBasicMaterial({ color: 0x6366f1 });
-            const innerCore = new THREE.Mesh(innerGeo, innerMat);
-            scene.add(innerCore);
-
-            camera.position.z = 4;
-
-            function animate() {
-                requestAnimationFrame(animate);
-                sphere.rotation.x += 0.005;
-                sphere.rotation.y += 0.007;
-                innerCore.rotation.y -= 0.01;
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-        </script>
-    </body>
-    </html>
-    """
-    components.html(three_js_html, height=180)
-
-# ---------------------------------------------------------
 # Session State Initialization
 # ---------------------------------------------------------
+if "intro_passed" not in st.session_state:
+    st.session_state.intro_passed = False
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -175,22 +119,99 @@ def queue_prompt(prompt_text):
 
 
 QUICK_PROMPTS = [
-    ("💡 Key Takeaways",
-     "Summarize the key takeaways from this report in 4-5 concise bullet points."),
-    ("💻 Code Example / Implementation",
-     "Give a clean, practical code example or implementation based on this report."),
-    ("📐 Future Outlook",
-     "What is the future outlook, and what challenges does this report mention or imply?"),
+    ("💡 Key Takeaways", "Summarize the key takeaways from this report in 4-5 concise bullet points."),
+    ("💻 Code Example / Implementation", "Give a clean, practical code example or implementation based on this report."),
+    ("📐 Future Outlook", "What is the future outlook, and what challenges does this report mention or imply?"),
 ]
 
 # ---------------------------------------------------------
-# Sidebar Setup
+# Cinematic 3D Globe Intro Screen
+# ---------------------------------------------------------
+if not st.session_state.intro_passed:
+    st.markdown("""
+        <div style='text-align: center; margin-top: 2rem;'>
+            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.5rem; font-weight: 800;'>Global Intelligence Core</h1>
+            <p style='color: #94a3b8; font-size: 1.2rem;'>Initializing Autonomous Research Node...</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    globe_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { margin: 0; background: transparent; overflow: hidden; }
+            canvas { display: block; margin: auto; }
+        </style>
+    </head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script>
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 350, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, 350);
+            document.body.appendChild(renderer.domElement);
+
+            // Globe Particle Mesh
+            const geometry = new THREE.SphereGeometry(1.8, 32, 32);
+            const material = new THREE.PointsMaterial({
+                color: 0xc084fc,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.9
+            });
+            const globe = new THREE.Points(geometry, material);
+            scene.add(globe);
+
+            // Inner core ring
+            const ringGeo = new THREE.RingGeometry(2.2, 2.25, 32);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            scene.add(ring);
+
+            camera.position.z = 5;
+
+            let exploding = false;
+            let explodeFactor = 1.0;
+
+            window.triggerExplosion = function() {
+                exploding = true;
+            };
+
+            function animate() {
+                requestAnimationFrame(animate);
+                globe.rotation.y += 0.008;
+                ring.rotation.z -= 0.01;
+
+                if (exploding) {
+                    explodeFactor += 0.1;
+                    globe.scale.set(explodeFactor, explodeFactor, explodeFactor);
+                    material.opacity -= 0.03;
+                }
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        </script>
+    </body>
+    </html>
+    """
+    components.html(globe_html, height=370)
+
+    col1, col2, col3 = st.columns([2, 2, 2])
+    with col2:
+        if st.button("⚡ Initialize Global Core & Launch", use_container_width=True):
+            st.session_state.intro_passed = True
+            st.rerun()
+
+    st.stop()  # Halt rendering the main app until intro is passed
+
+# ---------------------------------------------------------
+# Main App (After Globe Explosion Transition)
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("""<h3 style='color: #c084fc;'>🧠 AI Neural Core</h3>""", unsafe_allow_html=True)
-    render_3d_tech_badge()
-    
-    st.markdown("---")
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload PDF documents", type=["pdf"])
     if st.button("⚡ Ingest Documents"):
@@ -221,9 +242,7 @@ with st.sidebar:
                 st.session_state.current_query = item["query"]
                 st.rerun()
 
-# ---------------------------------------------------------
 # Header & Research Input Area
-# ---------------------------------------------------------
 st.markdown("""<h1 style='text-align: center; background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3rem; font-weight: 800;'>Autonomous Research Agent</h1>""", unsafe_allow_html=True)
 st.markdown("""<p style='text-align: center; color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem;'>Synthesizing real-time web intelligence with private document context.</p>""", unsafe_allow_html=True)
 
@@ -268,9 +287,7 @@ if st.button("🚀 Run Research Agent"):
                 "messages": st.session_state.messages
             })
 
-# ---------------------------------------------------------
 # Report Output & Interactive Follow-Up Chat
-# ---------------------------------------------------------
 if st.session_state.report_markdown:
     st.markdown("---")
     st.markdown("""<h3 style='color: #f8fafc;'>📊 Generated Research Report</h3>""", unsafe_allow_html=True)
