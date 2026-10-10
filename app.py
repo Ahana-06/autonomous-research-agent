@@ -125,17 +125,17 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Landing Screen (Click-to-Burst)
+# Cinematic 3D Project Globe Splash Screen
 # ---------------------------------------------------------
 if not st.session_state.intro_passed:
     st.markdown("""
-        <div style='text-align: center; margin-top: 0.5rem;'>
-            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.2rem; font-weight: 800;'>Autonomous Research Agent</h1>
-            <p style='color: #c084fc; font-size: 1.15rem; font-weight: 600; margin-bottom: 0px;'>✨ Click directly on the 3D App Globe below to burst & launch dashboard ✨</p>
+        <div style='text-align: center; margin-top: 1rem;'>
+            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.5rem; font-weight: 800;'>Autonomous Research Agent</h1>
+            <p style='color: #c084fc; font-size: 1.2rem; font-weight: 600; margin-bottom: 5px;'>✨ Click directly on the 3D Project Globe to explode modules & launch ✨</p>
         </div>
     """, unsafe_allow_html=True)
 
-    app_globe_html = """
+    project_globe_html = """
     <!DOCTYPE html>
     <html>
     <head>
@@ -148,36 +148,51 @@ if not st.session_state.intro_passed:
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 420, 0.1, 1000);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 450, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 420);
+            renderer.setSize(window.innerWidth, 450);
             document.body.appendChild(renderer.domElement);
 
-            // App Globe Constellation Particles with outward velocities
-            const particleCount = 2000;
+            // Create multi-colored project module nodes forming a sphere
+            const totalParticles = 2400;
             const geometry = new THREE.BufferGeometry();
             const positions = [];
+            const colors = [];
             const velocities = [];
 
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(-1 + (2 * i) / particleCount);
-                const theta = Math.sqrt(particleCount * Math.PI) * phi;
+            const colorWeb = new THREE.Color(0x38bdf8);     // Live Web Search (Cyan)
+            const colorPDF = new THREE.Color(0xa855f7);     // PDF Ingestion (Purple)
+            const colorAI = new THREE.Color(0x6366f1);      // AI Report Synthesis (Indigo)
+            const colorChat = new THREE.Color(0xf43f5e);    // Follow-up Chat (Rose)
 
-                const x = 2 * Math.cos(theta) * Math.sin(phi);
-                const y = 2 * Math.sin(theta) * Math.sin(phi);
-                const z = 2 * Math.cos(phi);
+            for (let i = 0; i < totalParticles; i++) {
+                const phi = Math.acos(-1 + (2 * i) / totalParticles);
+                const theta = Math.sqrt(totalParticles * Math.PI) * phi;
+
+                const x = 2.2 * Math.cos(theta) * Math.sin(phi);
+                const y = 2.2 * Math.sin(theta) * Math.sin(phi);
+                const z = 2.2 * Math.cos(phi);
 
                 positions.push(x, y, z);
 
-                // Burst vectors pointing outward from center
-                velocities.push(x * 0.05, y * 0.05, z * 0.05);
+                // Assign project component colors based on position quadrant
+                let assignedColor = colorWeb;
+                if (y > 0.8) assignedColor = colorPDF;
+                else if (y < -0.8) assignedColor = colorAI;
+                else if (x > 0) assignedColor = colorChat;
+
+                colors.push(assignedColor.r, assignedColor.g, assignedColor.b);
+
+                // Outward burst vectors for project modules
+                velocities.push(x * 0.06, y * 0.06, z * 0.06);
             }
 
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
             const material = new THREE.PointsMaterial({
-                color: 0xc084fc,
-                size: 0.07,
+                size: 0.075,
+                vertexColors: true,
                 transparent: true,
                 opacity: 0.95
             });
@@ -185,19 +200,25 @@ if not st.session_state.intro_passed:
             const globe = new THREE.Points(geometry, material);
             scene.add(globe);
 
-            // Core Ring
-            const ringGeo = new THREE.RingGeometry(2.4, 2.48, 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            scene.add(ring);
+            // Orbiting Core Rings representing architecture layers
+            const ringGeo1 = new THREE.RingGeometry(2.7, 2.75, 64);
+            const ringMat1 = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+            const ring1 = new THREE.Mesh(ringGeo1, ringMat1);
+            ring1.rotation.x = Math.PI / 2;
+            scene.add(ring1);
 
-            camera.position.z = 5.5;
+            const ringGeo2 = new THREE.RingGeometry(3.1, 3.15, 64);
+            const ringMat2 = new THREE.MeshBasicMaterial({ color: 0xa855f7, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+            const ring2 = new THREE.Mesh(ringGeo2, ringMat2);
+            ring2.rotation.y = Math.PI / 3;
+            scene.add(ring2);
+
+            camera.position.z = 6;
 
             let bursting = false;
             let frameCount = 0;
 
-            // Trigger burst animation on click
+            // Click globe to trigger explosion and launch main app
             window.addEventListener('click', () => {
                 bursting = true;
             });
@@ -206,27 +227,30 @@ if not st.session_state.intro_passed:
                 requestAnimationFrame(animate);
 
                 if (!bursting) {
-                    globe.rotation.y += 0.006;
+                    globe.rotation.y += 0.005;
                     globe.rotation.x += 0.002;
-                    ring.rotation.z -= 0.01;
+                    ring1.rotation.z -= 0.008;
+                    ring2.rotation.z += 0.006;
                 } else {
-                    // Explode particles outward
+                    // Explode project modules outward into their app positions
                     const posAttr = geometry.attributes.position;
                     const arr = posAttr.array;
-                    for (let i = 0; i < particleCount; i++) {
-                        arr[i * 3] += velocities[i] * 2.5;
-                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 2.5;
-                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 2.5;
+                    for (let i = 0; i < totalParticles; i++) {
+                        arr[i * 3] += velocities[i] * 3;
+                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 3;
+                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 3;
                     }
                     posAttr.needsUpdate = true;
-                    material.opacity -= 0.03;
-                    ring.scale.addScalar(0.1);
-                    ring.material.opacity -= 0.04;
+                    material.opacity -= 0.025;
+                    ring1.scale.addScalar(0.12);
+                    ring2.scale.addScalar(0.12);
+                    ring1.material.opacity -= 0.03;
+                    ring2.material.opacity -= 0.03;
 
                     frameCount++;
                     if (frameCount > 35) {
-                        // Refresh page state to enter main dashboard
-                        window.parent.location.reload();
+                        // Signal Streamlit to pass intro and load dashboard
+                        window.parent.postMessage({ type: 'streamlit:setComponentValue', value: true }, '*');
                     }
                 }
 
@@ -235,22 +259,21 @@ if not st.session_state.intro_passed:
             animate();
 
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / 420;
+                camera.aspect = window.innerWidth / 450;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, 420);
+                renderer.setSize(window.innerWidth, 450);
             });
         </script>
     </body>
     </html>
     """
     
-    components.html(app_globe_html, height=440)
+    # Capture click event from the 3D component
+    globe_clicked = components.html(project_globe_html, height=470)
 
-    col1, col2, col3 = st.columns([1.5, 3, 1.5])
-    with col2:
-        if st.button("⚡ Force Launch Dashboard", use_container_width=True):
-            st.session_state.intro_passed = True
-            st.rerun()
+    if globe_clicked:
+        st.session_state.intro_passed = True
+        st.rerun()
 
     st.stop()
 
