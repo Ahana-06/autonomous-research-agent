@@ -130,13 +130,13 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Splash Screen
+# Cinematic 3D App Globe Splash Screen with Click-to-Burst
 # ---------------------------------------------------------
 if not st.session_state.dashboard_unlocked:
     st.markdown("""
         <div style='text-align: center; margin-top: 1rem; margin-bottom: 0px;'>
             <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.5rem; font-weight: 800;'>Autonomous Research Agent</h1>
-            <p style='color: #818cf8; font-size: 1.15rem; font-weight: 600; letter-spacing: 1px; margin-top: 5px;'>✨ Blue & Violet 3D App Globe Core ✨</p>
+            <p style='color: #818cf8; font-size: 1.15rem; font-weight: 600; letter-spacing: 1px; margin-top: 5px;'>✨ Click Globe to Burst & Launch Dashboard ✨</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -145,7 +145,7 @@ if not st.session_state.dashboard_unlocked:
     <html>
     <head>
         <style>
-            body { margin: 0; background: transparent; overflow: hidden; }
+            body { margin: 0; background: transparent; overflow: hidden; cursor: pointer; }
             canvas { display: block; margin: auto; }
         </style>
     </head>
@@ -153,15 +153,16 @@ if not st.session_state.dashboard_unlocked:
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 390, 0.1, 1000);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 420, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 390);
+            renderer.setSize(window.innerWidth, 420);
             document.body.appendChild(renderer.domElement);
 
-            const particleCount = 2600;
+            const particleCount = 2800;
             const geometry = new THREE.BufferGeometry();
             const positions = [];
             const colors = [];
+            const velocities = [];
 
             const palette = [
                 new THREE.Color(0x38bdf8), 
@@ -181,6 +182,9 @@ if not st.session_state.dashboard_unlocked:
                 positions.push(x, y, z);
                 const col = palette[Math.floor(Math.random() * palette.length)];
                 colors.push(col.r, col.g, col.b);
+
+                // Dispersal vectors radiating outward
+                velocities.push(x * 0.08, y * 0.08, z * 0.08);
             }
 
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -204,32 +208,59 @@ if not st.session_state.dashboard_unlocked:
 
             camera.position.z = 5.5;
 
+            let bursting = false;
+            let frameCount = 0;
+
+            window.addEventListener('click', () => {
+                bursting = true;
+            });
+
             function animate() {
                 requestAnimationFrame(animate);
-                globe.rotation.y += 0.005;
-                globe.rotation.x += 0.002;
-                ring.rotation.z -= 0.008;
+
+                if (!bursting) {
+                    globe.rotation.y += 0.005;
+                    globe.rotation.x += 0.002;
+                    ring.rotation.z -= 0.008;
+                } else {
+                    const posAttr = geometry.attributes.position;
+                    const arr = posAttr.array;
+                    for (let i = 0; i < particleCount; i++) {
+                        arr[i * 3] += velocities[i] * 3;
+                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 3;
+                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 3;
+                    }
+                    posAttr.needsUpdate = true;
+                    material.opacity -= 0.04;
+                    ring.scale.addScalar(0.12);
+                    ring.material.opacity -= 0.05;
+
+                    frameCount++;
+                    if (frameCount > 25) {
+                        // Send signal back to Streamlit to unlock dashboard
+                        window.parent.postMessage({ type: 'streamlit:setComponentValue', value: true }, '*');
+                    }
+                }
+
                 renderer.render(scene, camera);
             }
             animate();
 
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / 390;
+                camera.aspect = window.innerWidth / 420;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, 390);
+                renderer.setSize(window.innerWidth, 420);
             });
         </script>
     </body>
     </html>
     """
 
-    components.html(app_globe_html, height=410)
+    globe_clicked = components.html(app_globe_html, height=440)
 
-    col1, col2, col3 = st.columns([1.5, 3, 1.5])
-    with col2:
-        if st.button("🚀 Burst Globe & Enter Dashboard", use_container_width=True):
-            st.session_state.dashboard_unlocked = True
-            st.rerun()
+    if globe_clicked:
+        st.session_state.dashboard_unlocked = True
+        st.rerun()
 
     st.stop()
 
