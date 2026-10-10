@@ -125,13 +125,13 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Landing Screen
+# Cinematic 3D App Globe Landing Screen (Click-to-Burst)
 # ---------------------------------------------------------
 if not st.session_state.intro_passed:
     st.markdown("""
-        <div style='text-align: center; margin-top: 1rem;'>
+        <div style='text-align: center; margin-top: 0.5rem;'>
             <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.2rem; font-weight: 800;'>Autonomous Research Agent</h1>
-            <p style='color: #94a3b8; font-size: 1.1rem; margin-bottom: 5px;'>Interactive 3D App Globe Core Initialized</p>
+            <p style='color: #c084fc; font-size: 1.15rem; font-weight: 600; margin-bottom: 0px;'>✨ Click directly on the 3D App Globe below to burst & launch dashboard ✨</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -140,7 +140,7 @@ if not st.session_state.intro_passed:
     <html>
     <head>
         <style>
-            body { margin: 0; background: transparent; overflow: hidden; }
+            body { margin: 0; background: transparent; overflow: hidden; cursor: pointer; }
             canvas { display: block; margin: auto; }
         </style>
     </head>
@@ -148,15 +148,16 @@ if not st.session_state.intro_passed:
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
         <script>
             const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 420, 0.1, 1000);
             const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 400);
+            renderer.setSize(window.innerWidth, 420);
             document.body.appendChild(renderer.domElement);
 
-            // App Globe Constellation Particles
-            const particleCount = 1500;
+            // App Globe Constellation Particles with outward velocities
+            const particleCount = 2000;
             const geometry = new THREE.BufferGeometry();
             const positions = [];
+            const velocities = [];
 
             for (let i = 0; i < particleCount; i++) {
                 const phi = Math.acos(-1 + (2 * i) / particleCount);
@@ -167,60 +168,94 @@ if not st.session_state.intro_passed:
                 const z = 2 * Math.cos(phi);
 
                 positions.push(x, y, z);
+
+                // Burst vectors pointing outward from center
+                velocities.push(x * 0.05, y * 0.05, z * 0.05);
             }
 
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
 
             const material = new THREE.PointsMaterial({
                 color: 0xc084fc,
-                size: 0.06,
+                size: 0.07,
                 transparent: true,
-                opacity: 0.9
+                opacity: 0.95
             });
 
             const globe = new THREE.Points(geometry, material);
             scene.add(globe);
 
-            // Orbiting Core Ring
-            const ringGeo = new THREE.RingGeometry(2.4, 2.45, 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+            // Core Ring
+            const ringGeo = new THREE.RingGeometry(2.4, 2.48, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
             scene.add(ring);
 
             camera.position.z = 5.5;
 
+            let bursting = false;
+            let frameCount = 0;
+
+            // Trigger burst animation on click
+            window.addEventListener('click', () => {
+                bursting = true;
+            });
+
             function animate() {
                 requestAnimationFrame(animate);
-                globe.rotation.y += 0.006;
-                globe.rotation.x += 0.002;
-                ring.rotation.z -= 0.01;
+
+                if (!bursting) {
+                    globe.rotation.y += 0.006;
+                    globe.rotation.x += 0.002;
+                    ring.rotation.z -= 0.01;
+                } else {
+                    // Explode particles outward
+                    const posAttr = geometry.attributes.position;
+                    const arr = posAttr.array;
+                    for (let i = 0; i < particleCount; i++) {
+                        arr[i * 3] += velocities[i] * 2.5;
+                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 2.5;
+                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 2.5;
+                    }
+                    posAttr.needsUpdate = true;
+                    material.opacity -= 0.03;
+                    ring.scale.addScalar(0.1);
+                    ring.material.opacity -= 0.04;
+
+                    frameCount++;
+                    if (frameCount > 35) {
+                        // Refresh page state to enter main dashboard
+                        window.parent.location.reload();
+                    }
+                }
+
                 renderer.render(scene, camera);
             }
             animate();
 
             window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / 400;
+                camera.aspect = window.innerWidth / 420;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, 400);
+                renderer.setSize(window.innerWidth, 420);
             });
         </script>
     </body>
     </html>
     """
     
-    components.html(app_globe_html, height=420)
+    components.html(app_globe_html, height=440)
 
     col1, col2, col3 = st.columns([1.5, 3, 1.5])
     with col2:
-        if st.button("⚡ Explode Globe & Launch Dashboard", use_container_width=True):
+        if st.button("⚡ Force Launch Dashboard", use_container_width=True):
             st.session_state.intro_passed = True
             st.rerun()
 
     st.stop()
 
 # ---------------------------------------------------------
-# Main App Dashboard (Loaded After Globe Intro)
+# Main App Dashboard (Loaded After Globe Burst)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
