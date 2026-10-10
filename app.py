@@ -7,13 +7,6 @@ from agent import call_groq_llm
 # ---------------------------------------------------------
 st.set_page_config(page_title="Autonomous Research Agent", layout="wide", page_icon="⚡")
 
-# Handle launch state from URL query parameters
-if "launched" in st.query_params:
-    st.session_state.intro_passed = True
-
-if "intro_passed" not in st.session_state:
-    st.session_state.intro_passed = False
-
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -98,6 +91,9 @@ st.markdown("""
 # ---------------------------------------------------------
 # Session State Initialization
 # ---------------------------------------------------------
+if "dashboard_unlocked" not in st.session_state:
+    st.session_state.dashboard_unlocked = False
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -129,153 +125,7 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Splash Screen (Click to Burst)
-# ---------------------------------------------------------
-if not st.session_state.intro_passed:
-    st.markdown("""
-        <div style='text-align: center; margin-top: 2rem;'>
-            <h1 style='background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3.5rem; font-weight: 800;'>Autonomous Research Agent</h1>
-        </div>
-    """, unsafe_allow_html=True)
-
-    app_globe_html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { margin: 0; background: transparent; overflow: hidden; cursor: pointer; }
-            canvas { display: block; margin: auto; }
-            #instruction {
-                position: absolute;
-                bottom: 15px;
-                width: 100%;
-                text-align: center;
-                color: #818cf8;
-                font-family: 'Plus Jakarta Sans', sans-serif;
-                font-size: 16px;
-                font-weight: 600;
-                letter-spacing: 2px;
-                text-shadow: 0 0 12px rgba(129, 140, 248, 0.7);
-                pointer-events: none;
-            }
-        </style>
-    </head>
-    <body>
-        <div id="instruction">⚡ CLICK GLOBE TO BURST & LAUNCH DASHBOARD ⚡</div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-        <script>
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 480, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, 480);
-            document.body.appendChild(renderer.domElement);
-
-            const particleCount = 2800;
-            const geometry = new THREE.BufferGeometry();
-            const positions = [];
-            const colors = [];
-            const velocities = [];
-
-            // Electric blue and violet palette
-            const palette = [
-                new THREE.Color(0x38bdf8), 
-                new THREE.Color(0x6366f1), 
-                new THREE.Color(0x818cf8), 
-                new THREE.Color(0xa855f7)  
-            ];
-
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(-1 + (2 * i) / particleCount);
-                const theta = Math.sqrt(particleCount * Math.PI) * phi;
-
-                const x = 2.2 * Math.cos(theta) * Math.sin(phi);
-                const y = 2.2 * Math.sin(theta) * Math.sin(phi);
-                const z = 2.2 * Math.cos(phi);
-
-                positions.push(x, y, z);
-
-                const col = palette[Math.floor(Math.random() * palette.length)];
-                colors.push(col.r, col.g, col.b);
-
-                velocities.push(x * 0.08, y * 0.08, z * 0.08);
-            }
-
-            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-
-            const material = new THREE.PointsMaterial({
-                size: 0.075,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.95
-            });
-
-            const globe = new THREE.Points(geometry, material);
-            scene.add(globe);
-
-            const ringGeo = new THREE.RingGeometry(2.7, 2.76, 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x818cf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-            const ring = new THREE.Mesh(ringGeo, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            scene.add(ring);
-
-            camera.position.z = 6;
-
-            let bursting = false;
-            let frameCount = 0;
-
-            window.addEventListener('click', () => {
-                if (!bursting) {
-                    bursting = true;
-                    document.getElementById('instruction').style.display = 'none';
-                }
-            });
-
-            function animate() {
-                requestAnimationFrame(animate);
-
-                if (!bursting) {
-                    globe.rotation.y += 0.005;
-                    globe.rotation.x += 0.002;
-                    ring.rotation.z -= 0.008;
-                } else {
-                    const posAttr = geometry.attributes.position;
-                    const arr = posAttr.array;
-                    for (let i = 0; i < particleCount; i++) {
-                        arr[i * 3] += velocities[i] * 2.8;
-                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 2.8;
-                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 2.8;
-                    }
-                    posAttr.needsUpdate = true;
-                    material.opacity -= 0.035;
-                    ring.scale.addScalar(0.12);
-                    ring.material.opacity -= 0.04;
-
-                    frameCount++;
-                    if (frameCount > 28) {
-                        window.parent.location.href = window.parent.location.href.split('?')[0] + '?launched=true';
-                    }
-                }
-
-                renderer.render(scene, camera);
-            }
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / 480;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, 480);
-            });
-        </script>
-    </body>
-    </html>
-    """
-
-    components.html(app_globe_html, height=520)
-    st.stop()
-
-# ---------------------------------------------------------
-# Main App Dashboard (Loaded After Globe Burst)
+# Sidebar Setup
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
@@ -306,12 +156,142 @@ with st.sidebar:
                 st.session_state.report_markdown = item["report"]
                 st.session_state.messages = item["messages"]
                 st.session_state.current_query = item["query"]
+                st.session_state.dashboard_unlocked = True
                 st.rerun()
 
-# Header & Research Input Area
+# ---------------------------------------------------------
+# Main Page Header & Interactive 3D Globe Splash / Dashboard
+# ---------------------------------------------------------
 st.markdown("""<h1 style='text-align: center; background: linear-gradient(135deg, #818cf8, #c084fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size:3rem; font-weight: 800;'>Autonomous Research Agent</h1>""", unsafe_allow_html=True)
-st.markdown("""<p style='text-align: center; color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem;'>Synthesizing real-time web intelligence with private document context.</p>""", unsafe_allow_html=True)
+st.markdown("""<p style='text-align: center; color: #94a3b8; font-size: 1.05rem; margin-bottom: 1.5rem;'>Synthesizing real-time web intelligence with private document context.</p>""", unsafe_allow_html=True)
 
+if not st.session_state.dashboard_unlocked:
+    st.markdown("""
+        <div style='text-align: center; margin-bottom: 10px;'>
+            <p style='color: #818cf8; font-size: 1.1rem; font-weight: 600; letter-spacing: 1px;'>✨ EXPLORE 3D APP GLOBE CORE TO LAUNCH ✨</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    app_globe_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { margin: 0; background: transparent; overflow: hidden; cursor: pointer; }
+            canvas { display: block; margin: auto; }
+        </style>
+    </head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script>
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / 380, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, 380);
+            document.body.appendChild(renderer.domElement);
+
+            const particleCount = 2200;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+            const velocities = [];
+
+            const palette = [
+                new THREE.Color(0x38bdf8), 
+                new THREE.Color(0x6366f1), 
+                new THREE.Color(0x818cf8), 
+                new THREE.Color(0xa855f7)  
+            ];
+
+            for (let i = 0; i < particleCount; i++) {
+                const phi = Math.acos(-1 + (2 * i) / particleCount);
+                const theta = Math.sqrt(particleCount * Math.PI) * phi;
+
+                const x = 2.0 * Math.cos(theta) * Math.sin(phi);
+                const y = 2.0 * Math.sin(theta) * Math.sin(phi);
+                const z = 2.0 * Math.cos(phi);
+
+                positions.push(x, y, z);
+                const col = palette[Math.floor(Math.random() * palette.length)];
+                colors.push(col.r, col.g, col.b);
+                velocities.push(x * 0.08, y * 0.08, z * 0.08);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.075,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.95
+            });
+
+            const globe = new THREE.Points(geometry, material);
+            scene.add(globe);
+
+            const ringGeo = new THREE.RingGeometry(2.5, 2.55, 64);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x818cf8, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = Math.PI / 2;
+            scene.add(ring);
+
+            camera.position.z = 5.5;
+
+            let bursting = false;
+
+            window.addEventListener('click', () => {
+                bursting = true;
+            });
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                if (!bursting) {
+                    globe.rotation.y += 0.005;
+                    globe.rotation.x += 0.002;
+                    ring.rotation.z -= 0.008;
+                } else {
+                    const posAttr = geometry.attributes.position;
+                    const arr = posAttr.array;
+                    for (let i = 0; i < particleCount; i++) {
+                        arr[i * 3] += velocities[i] * 2.5;
+                        arr[i * 3 + 1] += velocities[i * 3 + 1] * 2.5;
+                        arr[i * 3 + 2] += velocities[i * 3 + 2] * 2.5;
+                    }
+                    posAttr.needsUpdate = true;
+                    material.opacity -= 0.04;
+                    ring.scale.addScalar(0.1);
+                    ring.material.opacity -= 0.05;
+                }
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / 380;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, 380);
+            });
+        </script>
+    </body>
+    </html>
+    """
+
+    globe_clicked = components.html(app_globe_html, height=400)
+
+    col1, col2, col3 = st.columns([2, 2, 2])
+    with col2:
+        if st.button("🚀 Enter Dashboard", use_container_width=True) or globe_clicked:
+            st.session_state.dashboard_unlocked = True
+            st.rerun()
+
+    st.markdown("<br><hr>", unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# Research Input Area & Main Dashboard
+# ---------------------------------------------------------
 user_query = st.text_area(
     "Research Query",
     value=st.session_state.current_query,
@@ -346,6 +326,7 @@ if st.button("🚀 Run Research Agent"):
             st.session_state.report_markdown = generated_report
             st.session_state.messages = []
             st.session_state.current_query = user_query
+            st.session_state.dashboard_unlocked = True
 
             st.session_state.research_history.append({
                 "query": user_query,
