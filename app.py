@@ -91,9 +91,6 @@ st.markdown("""
 # ---------------------------------------------------------
 # Session State Initialization
 # ---------------------------------------------------------
-if "launched" in st.query_params:
-    st.session_state.intro_passed = True
-
 if "intro_passed" not in st.session_state:
     st.session_state.intro_passed = False
 
@@ -175,7 +172,6 @@ if not st.session_state.intro_passed:
             const colors = [];
             const velocities = [];
 
-            // Blue and Violet color palette
             const palette = [
                 new THREE.Color(0x38bdf8), // Cyan / Light Blue
                 new THREE.Color(0x6366f1), // Deep Indigo
@@ -252,7 +248,8 @@ if not st.session_state.intro_passed:
 
                     frameCount++;
                     if (frameCount > 30) {
-                        window.parent.location.href = window.parent.location.href.split('?')[0] + '?launched=true';
+                        // Send value back to Streamlit component to trigger Python rerun
+                        window.parent.postMessage({ type: 'streamlit:setComponentValue', value: true }, '*');
                     }
                 }
 
@@ -270,7 +267,13 @@ if not st.session_state.intro_passed:
     </html>
     """
 
-    components.html(app_globe_html, height=500)
+    # Capture the component return value when clicked
+    globe_clicked = components.html(app_globe_html, height=500)
+    
+    if globe_clicked:
+        st.session_state.intro_passed = True
+        st.rerun()
+
     st.stop()
 
 # ---------------------------------------------------------
