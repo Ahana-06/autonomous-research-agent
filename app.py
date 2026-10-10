@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from agent import call_groq_llm
 
 # ---------------------------------------------------------
@@ -88,6 +89,65 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
+# 3D Component Function (Three.js Neural Core)
+# ---------------------------------------------------------
+def render_3d_tech_badge():
+    three_js_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body { margin: 0; background: transparent; overflow: hidden; }
+            canvas { display: block; }
+        </style>
+    </head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+        <script>
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const geometry = new THREE.IcosahedronGeometry(1.4, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0xa855f7, 
+                wireframe: true,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+
+            const innerGeo = new THREE.SphereGeometry(0.7, 16, 16);
+            const innerMat = new THREE.MeshBasicMaterial({ color: 0x6366f1 });
+            const innerCore = new THREE.Mesh(innerGeo, innerMat);
+            scene.add(innerCore);
+
+            camera.position.z = 4;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                sphere.rotation.x += 0.005;
+                sphere.rotation.y += 0.007;
+                innerCore.rotation.y -= 0.01;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        </script>
+    </body>
+    </html>
+    """
+    components.html(three_js_html, height=180)
+
+# ---------------------------------------------------------
 # Session State Initialization
 # ---------------------------------------------------------
 if "messages" not in st.session_state:
@@ -104,7 +164,6 @@ if "current_query" not in st.session_state:
 
 
 def start_new_chat():
-    """Clear the current report and follow-up chat. Recent Research is kept."""
     st.session_state.report_markdown = None
     st.session_state.messages = []
     st.session_state.current_query = ""
@@ -112,11 +171,9 @@ def start_new_chat():
 
 
 def queue_prompt(prompt_text):
-    """Called when a follow-up chip is clicked; the chat section runs it."""
     st.session_state["pending_prompt"] = prompt_text
 
 
-# Quick follow-up prompts: (button label, question sent to the assistant)
 QUICK_PROMPTS = [
     ("💡 Key Takeaways",
      "Summarize the key takeaways from this report in 4-5 concise bullet points."),
@@ -130,6 +187,10 @@ QUICK_PROMPTS = [
 # Sidebar Setup
 # ---------------------------------------------------------
 with st.sidebar:
+    st.markdown("""<h3 style='color: #c084fc;'>🧠 AI Neural Core</h3>""", unsafe_allow_html=True)
+    render_3d_tech_badge()
+    
+    st.markdown("---")
     st.markdown("""<h3 style='color: #c084fc;'>📚 Knowledge Base</h3>""", unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload PDF documents", type=["pdf"])
     if st.button("⚡ Ingest Documents"):
@@ -177,8 +238,6 @@ if st.button("🚀 Run Research Agent"):
     if not user_query.strip():
         st.warning("Please enter a research topic first.")
     else:
-        mode_label = "Strict Document Context" if doc_only_mode else "Document Context + Live Web Search"
-
         with st.spinner(f"Generating research report on '{user_query}'..."):
             report_prompt = [
                 {
@@ -229,7 +288,6 @@ if st.session_state.report_markdown:
     st.markdown("""<h3 style='color: #f8fafc;'>💬 AI Follow-up Assistant</h3>""", unsafe_allow_html=True)
     st.caption("Click a quick prompt, or type your own question below.")
 
-    # Clickable quick-prompt chips (exactly 3 columns matching QUICK_PROMPTS count)
     chip_cols = st.columns(3)
     for i, (label, question_text) in enumerate(QUICK_PROMPTS):
         with chip_cols[i]:
