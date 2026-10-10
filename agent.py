@@ -1,9 +1,9 @@
 import os
-from groq import Groq
+import requests
 
 def call_groq_llm(messages, doc_only_mode=False):
     """
-    Calls the Groq API using a clean model identifier.
+    Directly calls the Groq REST API endpoint via requests to guarantee clean model routing.
     """
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -14,27 +14,34 @@ def call_groq_llm(messages, doc_only_mode=False):
             pass
 
     if not api_key:
-        return "⚠️ Error: GROQ_API_KEY is not configured in Streamlit Secrets or Environment Variables."
+        return "⚠️ Error: GROQ_API_KEY is missing in Streamlit Secrets."
+
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    
+    headers = {
+        "Authorization": f"Bearer {api_key.strip()}",
+        "Content-Type": "application/json"
+    }
+
+    # Clean, verified model string
+    formatted_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
+
+    payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": formatted_messages,
+        "temperature": 0.3,
+        "max_tokens": 1024
+    }
 
     try:
-        client = Groq(api_key=api_key)
-        
-        # Clean string without backticks or non-breaking spaces
-        model_name = "llama-3.1-8b-instant"
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        data = response.json()
 
-        formatted_messages = []
-        for msg in messages:
-            formatted_messages.append({
-                "role": msg["role"],
-                "content": msg["content"]
-            })
-
-        completion = client.chat.completions.create(
-            model=model_name,
-            messages=formatted_messages,
-            temperature=0.3,
-            max_tokens=1024
-        )
-        return completion.choices[0].message.content
+        if response.status_code == 200:
+            return data["choices"][0]["message"]["content"]
+        else:
+            error_msg = data.get("error", {}).get("message", response.text)
+            return f"API Response Error ({response.status_code}): {error_msg}"
+            
     except Exception as e:
-        return f"Error calling Groq API: {str(e)}"
+        return f"Request Exception: {str(e)}"
