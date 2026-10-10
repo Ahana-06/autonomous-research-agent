@@ -45,11 +45,6 @@ st.markdown("""
         font-weight: 600 !important;
         font-size: 16px !important;
         box-shadow: 0 4px 25px rgba(99, 102, 241, 0.4) !important;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 30px rgba(168, 85, 247, 0.6) !important;
     }
 
     /* Follow-up quick-prompt chips */
@@ -130,7 +125,7 @@ QUICK_PROMPTS = [
 ]
 
 # ---------------------------------------------------------
-# Cinematic 3D App Globe Splash Screen (Click-to-Burst)
+# Cinematic 3D App Globe Splash Screen (Click to Burst)
 # ---------------------------------------------------------
 if not st.session_state.dashboard_unlocked:
     st.markdown("""
@@ -207,7 +202,6 @@ if not st.session_state.dashboard_unlocked:
             camera.position.z = 5.5;
 
             let bursting = false;
-            let frameCount = 0;
 
             window.addEventListener('click', () => {
                 bursting = true;
@@ -232,15 +226,6 @@ if not st.session_state.dashboard_unlocked:
                     material.opacity -= 0.04;
                     ring.scale.addScalar(0.12);
                     ring.material.opacity -= 0.05;
-
-                    frameCount++;
-                    if (frameCount > 30) {
-                        window.parent.postMessage({
-                            isStreamlitMessage: true,
-                            type: "streamlit:setComponentValue",
-                            value: true
-                        }, "*");
-                    }
                 }
 
                 renderer.render(scene, camera);
@@ -257,11 +242,13 @@ if not st.session_state.dashboard_unlocked:
     </html>
     """
 
-    globe_clicked = components.html(app_globe_html, height=430)
-    
-    if globe_clicked:
-        st.session_state.dashboard_unlocked = True
-        st.rerun()
+    components.html(app_globe_html, height=430)
+
+    col1, col2, col3 = st.columns([1.5, 3, 1.5])
+    with col2:
+        if st.button("🚀 Burst & Enter Dashboard", use_container_width=True):
+            st.session_state.dashboard_unlocked = True
+            st.rerun()
 
     st.stop()
 
