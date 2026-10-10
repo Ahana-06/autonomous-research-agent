@@ -2,9 +2,6 @@ import os
 import requests
 
 def call_groq_llm(messages, doc_only_mode=False):
-    """
-    Directly calls the Groq REST API endpoint via requests to guarantee clean model routing.
-    """
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         try:
@@ -23,15 +20,14 @@ def call_groq_llm(messages, doc_only_mode=False):
         "Content-Type": "application/json"
     }
 
-    # Clean, verified model string
     formatted_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
 
     payload = {
-    "model": "openai/gpt-oss-20b",
-    "messages": formatted_messages,
-    "temperature": 0.3,
-    "max_tokens": 1024
-}
+        "model": "openai/gpt-oss-20b",  # Active and supported model ID
+        "messages": formatted_messages,
+        "temperature": 0.3,
+        "max_tokens": 1024
+    }
 
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=30)
