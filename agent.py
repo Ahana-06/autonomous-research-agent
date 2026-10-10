@@ -23,7 +23,7 @@ def call_groq_llm(messages, doc_only_mode=False):
     formatted_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
 
     payload = {
-        "model": "openai/gpt-oss-20b",  # Active and supported model ID
+        "model": "llama-3.1-8b-instant",
         "messages": formatted_messages,
         "temperature": 0.3,
         "max_tokens": 1024
