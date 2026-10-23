@@ -391,17 +391,47 @@ if st.session_state.report_markdown:
                 item["messages"] = st.session_state.messages
 
                 # --- RAG Evaluation Metrics Section ---
+# --- RAG Metrics, Cost, Logging & Safety Sidebar Section ---
 import pandas as pd
 
 with st.sidebar:
     st.markdown("---")
-    with st.expander("📊 View RAG Metrics (Ragas)"):
+    with st.expander("🛡️ RAG Analytics, Cost & Safety"):
+        # 1. RAG Correctness Metrics
         try:
-            df_metrics = pd.read_csv("ragas_evaluation_results.csv")
-            avg_score = df_metrics["answer_correctness"].mean()
-            
-            st.metric("Avg Correctness", f"{avg_score:.4f}")
-            st.caption(f"Evaluated Queries: {len(df_metrics)}")
-            st.dataframe(df_metrics[["question", "answer_correctness"]], use_container_width=True)
+            df_rag = pd.read_csv("ragas_evaluation_results.csv")
+            avg_score = df_rag["answer_correctness"].mean()
+            st.metric("RAG Correctness Score", f"{avg_score:.4f}")
         except FileNotFoundError:
-            st.info("Run `python eval.py` to generate evaluation metrics.")
+            st.info("Run `python eval.py` for RAG scores.")
+
+        st.divider()
+
+        # 2. Prompt Cost & Token Monitoring
+        try:
+            df_logs = pd.read_csv("agent_audit_logs.csv")
+            total_cost = df_logs["estimated_cost_usd"].sum()
+            total_tokens = df_logs["tokens"].sum()
+            
+            col1, col2 = st.columns(2)
+            col1.metric("Total Tokens", int(total_tokens))
+            col2.metric("Est. Cost ($)", f"${total_cost:.4f}")
+        except FileNotFoundError:
+            st.metric("Est. Cost ($)", "$0.0000")
+
+        st.divider()
+
+        # 3. Safety Guardrail Status
+        st.caption("🔒 Safety & Moderation Status")
+        try:
+            df_logs = pd.read_csv("agent_audit_logs.csv")
+            flagged_count = len(df_logs[df_logs["safety_status"] != "Safe"])
+            if flagged_count > 0:
+                st.warning(f"⚠️ {flagged_count} query/queries flagged by safety filter.")
+            else:
+                st.success("✅ All recent queries passed safety checks.")
+            
+            # Show live audit log table
+            st.dataframe(df_logs[["timestamp", "safety_status", "estimated_cost_usd"]], use_container_width=True)
+        except FileNotFoundError:
+            st.info("No audit logs recorded yet.")
